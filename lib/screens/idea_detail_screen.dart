@@ -1,135 +1,57 @@
-import 'package:eurofarma_project/models/idea_model.dart';
-import 'package:eurofarma_project/utils/mock_data.dart';
 import 'package:flutter/material.dart';
+import '../models/idea_model.dart';
+import '../utils/mock_data.dart'; 
 
 class IdeaDetailScreen extends StatelessWidget {
   final Idea idea;
+  final Function(String ideaId, bool approved)? onModerationComplete; 
 
-  const IdeaDetailScreen({required this.idea, Key? key}) : super(key: key);
+  const IdeaDetailScreen({
+    required this.idea, 
+    this.onModerationComplete, 
+    Key? key
+  }) : super(key: key);
 
-  @override
-  Widget build(BuildContext context) {
-    // Geração dinâmica dos comentários para simular o volume total
-    final List<Comment> allComments = generateMockComments(idea.comments);
+  void _handleAction(BuildContext context, bool approved) {
+    if (onModerationComplete != null) {
+        onModerationComplete!(idea.id, approved);
+    }
+    Navigator.pop(context);
+  }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(idea.title, style: const TextStyle(color: Colors.white, fontSize: 16)),
-        backgroundColor: Colors.blue[900],
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Cabeçalho da Ideia e Autor
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 25,
-                    backgroundImage: NetworkImage(idea.authorProfilePicUrl),
-                  ),
-                  const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        idea.author,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                      Text(
-                        'Postado há ${idea.timeAgo}',
-                        style: const TextStyle(color: Colors.grey, fontSize: 12),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const Divider(height: 30),
-
-              // Descrição Completa da Ideia
-              Text(
-                idea.description, 
-                style: const TextStyle(fontSize: 16, height: 1.5),
-              ),
-              const Divider(height: 30),
-
-              // Interações (Likes/Comentários)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildInteractionCount(Icons.thumb_up_alt_outlined, idea.likes),
-                  // Usando o número total para a contagem visual
-                  _buildInteractionCount(Icons.comment_outlined, idea.comments), 
-                ],
-              ),
-              const Divider(height: 30),
-
-              // Seção de Comentários
-              Text(
-                'Comentários (${allComments.length})', // A contagem é o tamanho da lista gerada
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 10),
-              
-              // Lista de Comentários (usando a lista completa)
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: allComments.length,
-                itemBuilder: (context, index) {
-                  return _buildCommentItem(allComments[index]);
-                },
-              ),
-            ],
+  // WIDGET AUXILIAR CORRIGIDO: Remove o Expanded interno e usa apenas a Row.
+  Widget _buildDetailRow(String label, String value, Color color) {
+    // Usamos um SizedBox para dar largura fixa ao label e deixamos o valor flexível
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        // Removido mainAxisAlignment.spaceBetween para evitar que a Row interna exija largura total
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 140, // Largura fixa para o rótulo
+            child: Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
           ),
-        ),
-      ),
-      // Campo de Input para novos comentários
-      bottomNavigationBar: Padding(
-        padding: MediaQuery.of(context).viewInsets,
-        child: Container(
-          padding: const EdgeInsets.all(8.0),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.2), spreadRadius: 1, blurRadius: 5)],
+          // Usamos Expanded para garantir que o valor preencha o restante do espaço horizontal
+          Expanded( 
+            child: Text(
+              value,
+              style: TextStyle(color: color, fontWeight: FontWeight.bold),
+              // Adicionado overflow.ellipsis para segurança, caso o texto seja muito longo
+              overflow: TextOverflow.ellipsis, 
+              maxLines: 1,
+            ),
           ),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Adicionar um comentário...',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-                  ),
-                ),
-              ),
-              IconButton(
-                icon: Icon(Icons.send, color: Colors.blue[900]),
-                onPressed: () {
-                  // Lógica para enviar comentário
-                },
-              ),
-            ],
-          ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildInteractionCount(IconData icon, int count) {
-    return Row(
-      children: [
-        Icon(icon, size: 20, color: Colors.grey),
-        const SizedBox(width: 5),
-        Text('$count', style: const TextStyle(color: Colors.grey)),
-      ],
-    );
-  }
-
-  Widget _buildCommentItem(Comment comment) {
+  Widget _buildCommentItem(Map<String, String> comment) {
+    // ... (Mantido, usa List<Map>)
     return Padding(
       padding: const EdgeInsets.only(bottom: 15.0),
       child: Row(
@@ -137,7 +59,7 @@ class IdeaDetailScreen extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 15,
-            backgroundImage: NetworkImage(comment.authorPicUrl),
+            backgroundImage: NetworkImage(comment['pic']!),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -147,21 +69,160 @@ class IdeaDetailScreen extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      comment.author,
+                      comment['author']!,
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                     ),
                     const SizedBox(width: 5),
                     Text(
-                      '· ${comment.timeAgo}',
+                      '· ${comment['time']!}',
                       style: const TextStyle(color: Colors.grey, fontSize: 12),
                     ),
                   ],
                 ),
                 const SizedBox(height: 3),
-                Text(comment.text),
+                Text(comment['text']!),
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isAdminMode = onModerationComplete != null;
+    final int totalMockComments = idea.comments;
+    
+    // Lista de comentários para exibição
+    final List<Map<String, String>> commentsToShow = getSimpleMockComments(isAdminMode ? totalMockComments : 3);
+    final bool showViewAllButton = !isAdminMode && totalMockComments > commentsToShow.length;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Detalhes: ${idea.title}', style: const TextStyle(color: Colors.white)),
+        backgroundColor: Colors.blue[900],
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // --- CABEÇALHO E DESCRIÇÃO ---
+                  Row(
+                    children: [
+                      CircleAvatar(radius: 20, backgroundImage: NetworkImage(idea.authorProfilePicUrl)),
+                      const SizedBox(width: 10),
+                      Text(idea.author, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    ],
+                  ),
+                  const Divider(height: 25),
+                  
+                  Text(idea.description, style: const TextStyle(fontSize: 16, height: 1.5)),
+                  const Divider(height: 30),
+
+                  // --- METRICAS DE INTERAÇÃO/GESTAO (CORREÇÃO DE LAYOUT APLICADA) ---
+                  // A Row principal da tela agora está em Column (SingleChildScrollView),
+                  // mas a Row interna (que causava o erro) foi corrigida no _buildDetailRow.
+                  
+                  _buildDetailRow('Status:', idea.status, Colors.blue),
+                  _buildDetailRow('XP:', '${idea.xpReward} pts', Colors.green),
+                  _buildDetailRow('Nível de Impacto:', idea.impactLevel, Colors.orange),
+                  _buildDetailRow('Curtidas:', idea.likes.toString(), Colors.grey),
+
+                  // --- SEÇÃO DE COMENTÁRIOS ---
+                  const Divider(height: 30),
+                  Text(
+                    'Comentários ($totalMockComments)', 
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 15),
+
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: commentsToShow.length, 
+                    itemBuilder: (context, index) {
+                      return _buildCommentItem(commentsToShow[index]);
+                    },
+                  ),
+                  
+                  // Botão "Ver Todos" (Mock visual)
+                  if (showViewAllButton)
+                    TextButton(
+                        onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Simulando carregamento de $totalMockComments comentários (API)...'))
+                            );
+                        },
+                        child: Text('Ver todos os $totalMockComments comentários', style: TextStyle(color: Colors.blue[900])),
+                    ),
+
+
+                  // Botões de Admin (Se aplicável)
+                  if (isAdminMode)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 20.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          ElevatedButton.icon(
+                            onPressed: () => _handleAction(context, true), 
+                            icon: const Icon(Icons.check, color: Colors.white),
+                            label: const Text('Aprovar Ideia', style: TextStyle(color: Colors.white)),
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                          ),
+                          ElevatedButton.icon(
+                            onPressed: () => _handleAction(context, false), 
+                            icon: const Icon(Icons.close, color: Colors.white),
+                            label: const Text('Reprovar', style: TextStyle(color: Colors.white)),
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          
+          // --- CAIXA DE INPUT PARA COMENTÁRIOS (APENAS PARA COLABORADOR) ---
+          if (!isAdminMode)
+             Padding(
+              padding: MediaQuery.of(context).viewInsets,
+              child: Container(
+                padding: const EdgeInsets.all(8.0),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border(top: BorderSide(color: Colors.grey.shade200)),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        decoration: InputDecoration(
+                          hintText: 'Adicionar um comentário...',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.send, color: Colors.blue[900]),
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Comentário simulado enviado!'))
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );

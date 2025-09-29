@@ -9,7 +9,13 @@ class IdeaCard extends StatelessWidget {
 
   void _navigateToDetail(BuildContext context) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => IdeaDetailScreen(idea: idea)),
+      MaterialPageRoute(
+        builder: (context) => IdeaDetailScreen(
+          idea: idea,
+          // *** OBRIGATÓRIO: NÃO passe onModerationComplete aqui! ***
+          // Ele é opcional, então omitir a passagem está correto.
+        ),
+      ),
     );
   }
 

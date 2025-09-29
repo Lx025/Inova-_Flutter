@@ -2,15 +2,41 @@ import 'package:eurofarma_project/models/reward_model.dart';
 import 'package:eurofarma_project/utils/mock_data.dart';
 import 'package:flutter/material.dart';
 
-class StoreScreen extends StatelessWidget {
-  final int userPoints = 12500; 
-
+class StoreScreen extends StatefulWidget {
   const StoreScreen({Key? key}) : super(key: key);
 
+  @override
+  State<StoreScreen> createState() => _StoreScreenState();
+}
+
+class _StoreScreenState extends State<StoreScreen> {
+  int _userPoints = 12500; 
+  final Map<String, DateTime> _redeemedCooldowns = {};
+
+  bool _isRewardOnCooldown(String rewardId) {
+    final cooldownTime = _redeemedCooldowns[rewardId];
+    if (cooldownTime == null) {
+      return false;
+    }
+    return DateTime.now().isBefore(cooldownTime);
+  }
+
   void _handleRedeem(BuildContext context, Reward reward) {
-    if (userPoints >= reward.cost) {
+    if (_isRewardOnCooldown(reward.id)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Sucesso! Você trocou ${reward.cost} pontos por ${reward.name}.')),
+        const SnackBar(content: Text('Este item já foi resgatado recentemente. Espere o prazo de 1 semana para novo resgate.', style: TextStyle(color: Colors.orange))),
+      );
+      return;
+    }
+
+    if (_userPoints >= reward.cost) {
+      setState(() {
+        _userPoints -= reward.cost;
+        _redeemedCooldowns[reward.id] = DateTime.now().add(const Duration(days: 7));
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Sucesso! Você trocou ${reward.cost} pontos por ${reward.name}. Seu novo saldo é $_userPoints pontos.')),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -39,7 +65,7 @@ class StoreScreen extends StatelessWidget {
                   Icon(Icons.star, color: Colors.amber[700]),
                   const SizedBox(width: 5),
                   Text(
-                    userPoints.toString(),
+                    _userPoints.toString(), 
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blue[900]),
                   ),
                 ],
@@ -49,23 +75,22 @@ class StoreScreen extends StatelessWidget {
         ),
         
         const Padding(
-          padding: EdgeInsets.all(16.0),
+          padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
           child: Text(
             'Troque seus pontos por recompensas exclusivas!',
-            style: TextStyle(fontSize: 16, color: Colors.grey),
+            style: TextStyle(fontSize: 14, color: Colors.grey),
           ),
         ),
 
         // Lista de Recompensas
         Expanded(
           child: GridView.builder(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(8),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2, 
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              // *** AJUSTE PRINCIPAL: Diminui a proporção altura/largura para achatar o card. ***
-              childAspectRatio: 0.85, 
+              crossAxisCount: 3, // ALTERADO: 3 itens por linha (melhor usabilidade)
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+              childAspectRatio: 0.65, // ALTERADO: Reduz drasticamente a altura do card
             ),
             itemCount: mockRewards.length,
             itemBuilder: (context, index) {
@@ -79,65 +104,98 @@ class StoreScreen extends StatelessWidget {
   }
 
   Widget _buildRewardCard(BuildContext context, Reward reward) {
-    final bool canAfford = userPoints >= reward.cost;
+    final bool canAfford = _userPoints >= reward.cost;
+    final bool isRedeemedOnCooldown = _isRewardOnCooldown(reward.id);
+    
+    String buttonText;
+    Color buttonColor;
+    VoidCallback? onPressed;
+
+    if (isRedeemedOnCooldown) {
+      buttonText = 'Resgatado';
+      buttonColor = Colors.grey[600]!;
+      onPressed = null;
+    } else if (!canAfford) {
+      buttonText = 'Falta Pontos';
+      buttonColor = Colors.grey[400]!;
+      onPressed = null;
+    } else {
+      buttonText = 'Resgatar';
+      buttonColor = Colors.green;
+      onPressed = () => _handleRedeem(context, reward);
+    }
     
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Imagem
           Expanded(
+            flex: 4, // Dá mais espaço para a imagem
             child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
               child: Image.network(
                 reward.imageUrl,
                 fit: BoxFit.cover,
-                // Reduzindo o tamanho da imagem de erro/placeholder
-                errorBuilder: (context, error, stackTrace) => const Icon(Icons.shopping_bag, size: 40, color: Colors.grey),
+                errorBuilder: (context, error, stackTrace) => const Center(child: Icon(Icons.shopping_bag, size: 30, color: Colors.grey)),
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Ajustando a fonte do nome do item
-                Text(
-                  reward.name,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14), 
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Icon(Icons.star, color: Colors.amber[700], size: 14), // Ícone menor
-                    const SizedBox(width: 4),
-                    Text(
-                      reward.cost.toString(),
-                      style: TextStyle(color: Colors.amber[700], fontWeight: FontWeight.bold, fontSize: 14), // Fonte menor
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  height: 35, // Altura do botão ligeiramente reduzida
-                  child: ElevatedButton(
-                    onPressed: canAfford ? () => _handleRedeem(context, reward) : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: canAfford ? Colors.green : Colors.grey[400],
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 0),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: Text(canAfford ? 'Resgatar' : 'Pontos Insuficientes', style: const TextStyle(fontSize: 12)), // Fonte menor no botão
+          // Conteúdo do Card
+          Expanded(
+            flex: 3, // Espaço para texto e botão
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  // Nome do Item (Fonte bem reduzida)
+                  Text(
+                    reward.name,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10), 
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
+                  // Descrição (Nova Adição)
+                  Text(
+                    reward.description,
+                    style: const TextStyle(fontSize: 8, color: Colors.grey), 
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  // Custo
+                  Row(
+                    children: [
+                      Icon(Icons.star, color: Colors.amber[700], size: 10), 
+                      const SizedBox(width: 2),
+                      Text(
+                        reward.cost.toString(),
+                        style: TextStyle(color: Colors.amber[700], fontWeight: FontWeight.bold, fontSize: 10), 
+                      ),
+                    ],
+                  ),
+                  // Botão
+                  SizedBox(
+                    width: double.infinity,
+                    height: 25, // Altura do botão bastante reduzida
+                    child: ElevatedButton(
+                      onPressed: onPressed, 
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: buttonColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 0),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                        textStyle: const TextStyle(fontSize: 9), // Fonte do botão minúscula
+                        minimumSize: Size.zero, 
+                      ),
+                      child: Text(buttonText), 
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],

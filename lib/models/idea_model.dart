@@ -3,10 +3,15 @@ class Idea {
   final String title;
   final String description;
   final String author;
-  final String authorProfilePicUrl; // NOVO: URL da imagem do autor
+  final String authorProfilePicUrl;
   final String timeAgo;
   final int likes;
   final int comments;
+  
+  // Campos adicionados para o fluxo de gestão e gamificação
+  String status; 
+  final String impactLevel; // Nível de impacto da ideia (Alto, Médio, etc.)
+  final int xpReward;      // Recompensa em XP associada (RF04)
 
   Idea({
     required this.id,
@@ -17,8 +22,12 @@ class Idea {
     required this.timeAgo,
     this.likes = 0,
     this.comments = 0,
+    required this.status,
+    required this.impactLevel,
+    required this.xpReward,
   });
 }
+
 
 class RankingUser {
   final int position;
