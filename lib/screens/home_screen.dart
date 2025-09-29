@@ -1,6 +1,7 @@
 import 'package:eurofarma_project/screens/innovation_submission_screen.dart';
 import 'package:eurofarma_project/screens/profile_screen.dart';
 import 'package:eurofarma_project/screens/ranking_screen.dart';
+import 'package:eurofarma_project/screens/store_screen.dart';
 import 'package:eurofarma_project/utils/mock_data.dart';
 import 'package:eurofarma_project/widgets/app_bottom_nav_bar.dart';
 import 'package:eurofarma_project/widgets/idea_card.dart';
@@ -17,12 +18,11 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0; // Current screen index in the bottom nav bar
 
   final List<Widget> _screens = [
-    // This screen itself (Feed/Home)
     _FeedScreenContent(), 
-    const RankingScreen(), // Ranking screen
-    const Center(child: Text('Store Screen (Loja de Recompensas RF08)')),
-    const InnovationSubmissionScreen(), // Innovation submission screen
-    const ProfileScreen(), // Profile screen
+    const RankingScreen(), 
+    const StoreScreen(), // ALTERADO: Adiciona a StoreScreen aqui
+    const InnovationSubmissionScreen(), 
+    const ProfileScreen(), 
   ];
 
   void _onTabTapped(int index) {

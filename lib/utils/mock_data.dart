@@ -1,3 +1,5 @@
+import 'package:eurofarma_project/models/reward_model.dart';
+
 import '../models/idea_model.dart';
 
 const String MOCK_PIC_FELIPE = 'https://picsum.photos/id/1012/100/100';
@@ -102,6 +104,41 @@ final List<Comment> mockCommentsBase = [
     authorPicUrl: MOCK_PIC_LEONARDO,
     text: 'Achei a ideia muito relevante para estimular a colaboração e a cultura de inovação que a Inova+ busca.',
     timeAgo: '11h',
+  ),
+];
+
+final List<Reward> mockRewards = [
+  Reward(
+    id: 'R01',
+    name: 'Vale-Presente R\$100',
+    description: 'Um vale para usar em lojas parceiras da Eurofarma.',
+    cost: 5000, 
+    // Imagem mais adequada para "Vale-Presente"
+    imageUrl: 'https://images.unsplash.com/photo-1579546929518-971f15aa0252?q=80&w=200&h=150&fit=crop',
+  ),
+  Reward(
+    id: 'R02',
+    name: 'Dia de Folga Extra',
+    description: 'Troque seus pontos por um dia de descanso remunerado.',
+    cost: 15000, 
+    // Imagem mais adequada para "Dia de Folga" (praia/descanso)
+    imageUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=200&h=150&fit=crop',
+  ),
+  Reward(
+    id: 'R03',
+    name: 'Café com a Diretoria',
+    description: 'Networking e reconhecimento pelo seu nível de inovação.',
+    cost: 8000, 
+    // Imagem mais adequada para "Networking/Reunião"
+    imageUrl: 'https://images.unsplash.com/photo-1549488344-9f268a735c02?q=80&w=200&h=150&fit=crop',
+  ),
+  Reward(
+    id: 'R04',
+    name: 'Certificado de Destaque',
+    description: 'Um reconhecimento formal da sua contribuição em inovação.',
+    cost: 2000, 
+    // Imagem mais adequada para "Certificado/Prêmio"
+    imageUrl: 'https://images.unsplash.com/photo-1510936111840-692797e9de29?q=80&w=200&h=150&fit=crop',
   ),
 ];
 
